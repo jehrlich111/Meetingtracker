@@ -1,0 +1,258 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  organizations OrganizationUser[]
+  meetings      MeetingAttendee[]
+  tasks         Task[]
+  goals         Goal[]
+  notes         MeetingNote[]
+  decisions     Decision[]
+
+  @@map("users")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  settings  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users    OrganizationUser[]
+  meetings Meeting[]
+  goals    Goal[]
+  templates Template[]
+
+  @@map("organizations")
+}
+
+model OrganizationUser {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrgUserRole  @default(MEMBER)
+  createdAt      DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("organization_users")
+}
+
+model Meeting {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  duration    Int           // in minutes
+  status      MeetingStatus @default(SCHEDULED)
+  objectives  String[]      // JSON array of objectives
+  agenda      Json?         // JSON structure for agenda items
+  orgId       String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  organization Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  attendees    MeetingAttendee[]
+  tasks        Task[]
+  notes        MeetingNote[]
+  decisions    Decision[]
+
+  @@map("meetings")
+}
+
+model MeetingAttendee {
+  id         String           @id @default(cuid())
+  meetingId  String
+  userId     String
+  role       AttendeeRole     @default(PARTICIPANT)
+  prepStatus PrepStatus       @default(NOT_STARTED)
+  createdAt  DateTime         @default(now())
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@map("meeting_attendees")
+}
+
+model Goal {
+  id           String     @id @default(cuid())
+  title        String
+  description  String?
+  type         GoalType   @default(PERSONAL)
+  progress     Int        @default(0) // 0-100
+  deadline     DateTime?
+  parentGoalId String?
+  ownerId      String
+  orgId        String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Relations
+  owner      User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  parentGoal Goal?   @relation("GoalHierarchy", fields: [parentGoalId], references: [id])
+  subGoals   Goal[]  @relation("GoalHierarchy")
+  tasks      Task[]
+
+  @@map("goals")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(NOT_STARTED)
+  priority    Priority   @default(MEDIUM)
+  assigneeId  String?
+  dueDate     DateTime?
+  meetingId   String?
+  goalId      String?
+  effort      Int?       // estimated hours
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  assignee User?    @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  meeting  Meeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  goal     Goal?    @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@map("tasks")
+}
+
+model MeetingNote {
+  id        String   @id @default(cuid())
+  content   String
+  meetingId String
+  authorId  String
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  // Relations
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("meeting_notes")
+}
+
+model Decision {
+  id                   String             @id @default(cuid())
+  description          String
+  context              String?
+  meetingId            String
+  authorId             String
+  implementationStatus ImplementationStatus @default(PENDING)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  // Relations
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("decisions")
+}
+
+model Template {
+  id       String       @id @default(cuid())
+  name     String
+  type     TemplateType
+  structure Json        // JSON structure for template
+  orgId    String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("templates")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum OrgUserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AttendeeRole {
+  ORGANIZER
+  PARTICIPANT
+  OBSERVER
+}
+
+enum PrepStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum GoalType {
+  COMPANY
+  DEPARTMENT
+  TEAM
+  PERSONAL
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ImplementationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TemplateType {
+  STANDUP
+  PLANNING
+  REVIEW
+  STRATEGY
+  RETROSPECTIVE
+  ONE_ON_ONE
+}
