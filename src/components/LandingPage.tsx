@@ -1,11 +1,14 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Calendar, Target, Users, BarChart3, CheckCircle, ArrowRight } from 'lucide-react'
 
 export default function LandingPage() {
   const [isSigningIn, setIsSigningIn] = useState(false)
+  const { data: session } = useSession()
+  const router = useRouter()
 
   const handleSignIn = async () => {
     setIsSigningIn(true)
@@ -15,6 +18,18 @@ export default function LandingPage() {
       console.error('Sign in error:', error)
     } finally {
       setIsSigningIn(false)
+    }
+  }
+
+  const handleSignUp = () => {
+    router.push('/auth/signup')
+  }
+
+  const handleGetStarted = () => {
+    if (session) {
+      router.push('/pricing')
+    } else {
+      router.push('/auth/signup')
     }
   }
 
@@ -52,20 +67,26 @@ export default function LandingPage() {
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white">MeetingFlow</span>
           </div>
-          <button
-            onClick={handleSignIn}
-            disabled={isSigningIn}
-            className="btn btn-primary flex items-center space-x-2"
-          >
-            {isSigningIn ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            ) : (
-              <>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleSignIn}
+              disabled={isSigningIn}
+              className="btn btn-secondary flex items-center space-x-2"
+            >
+              {isSigningIn ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+              ) : (
                 <span>Sign In</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
+              )}
+            </button>
+            <button
+              onClick={handleSignUp}
+              className="btn btn-primary flex items-center space-x-2"
+            >
+              <span>Sign Up</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -83,8 +104,7 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={handleSignIn}
-                disabled={isSigningIn}
+                onClick={handleGetStarted}
                 className="btn btn-primary text-lg px-8 py-3 flex items-center justify-center space-x-2"
               >
                 <span>Get Started Free</span>
@@ -122,8 +142,7 @@ export default function LandingPage() {
               Join teams who have transformed their meeting culture and achieved measurable results.
             </p>
             <button
-              onClick={handleSignIn}
-              disabled={isSigningIn}
+              onClick={handleGetStarted}
               className="btn btn-primary text-lg px-8 py-3"
             >
               Start Your Free Trial

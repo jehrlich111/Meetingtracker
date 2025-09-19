@@ -31,12 +31,6 @@ export interface Meeting {
   attendees?: MeetingAttendee[];
   tasks?: Task[];
   notes?: MeetingNote[];
-  isRecurring?: boolean;
-  recurrencePattern?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
-  recurrenceInterval?: number; // Every X days/weeks/months/years
-  recurrenceEndDate?: Date;
-  parentMeetingId?: string; // For recurring meeting instances
-  recurringMeetingId?: string; // ID of the recurring series
   decisions?: Decision[];
 }
 
@@ -53,17 +47,17 @@ export interface MeetingAttendee {
 export interface Goal {
   id: string;
   title: string;
-  description?: string | null;
+  description?: string;
   type: 'COMPANY' | 'DEPARTMENT' | 'TEAM' | 'PERSONAL';
   progress: number;
-  deadline?: Date | null;
-  parentGoalId?: string | null;
+  deadline?: Date;
+  parentGoalId?: string;
   ownerId: string;
   orgId: string;
   createdAt: Date;
   updatedAt: Date;
   owner?: User;
-  parentGoal?: Goal | null;
+  parentGoal?: Goal;
   subGoals?: Goal[];
   tasks?: Task[];
 }
@@ -75,7 +69,6 @@ export interface Task {
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   assigneeId?: string;
-  assignedToUserId?: string; // Alternative field name for consistency
   dueDate?: Date;
   meetingId?: string;
   goalId?: string;
@@ -83,7 +76,6 @@ export interface Task {
   createdAt: Date;
   updatedAt: Date;
   assignee?: User;
-  assignedToUser?: User; // Alternative field name for consistency
   meeting?: Meeting;
   goal?: Goal;
 }
@@ -103,11 +95,9 @@ export interface Decision {
   description: string;
   context?: string;
   meetingId: string;
-  authorId: string;
   implementationStatus: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   createdAt: Date;
   updatedAt: Date;
-  author?: User;
 }
 
 export interface Template {

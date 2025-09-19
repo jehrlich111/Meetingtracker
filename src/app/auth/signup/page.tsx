@@ -3,20 +3,24 @@
 import { useState, useEffect } from 'react'
 import { signIn, getSession, signOut, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Calendar, Mail, Lock, ArrowRight } from 'lucide-react'
+import { Calendar, Mail, Lock, User, ArrowRight } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card from '@/components/ui/Card'
 
-export default function SignInPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+export default function SignUpPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
   const { data: session, status } = useSession()
 
-  // Clear any existing session when the sign-in page loads
+  // Clear any existing session when the signup page loads
   useEffect(() => {
     const clearSession = async () => {
       console.log('🧹 Clearing any existing session...')
@@ -47,37 +51,64 @@ export default function SignInPage() {
     )
   }
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
 
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
+      setIsLoading(false)
+      return
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long')
+      setIsLoading(false)
+      return
+    }
+
     try {
-      console.log('🚀 Attempting sign in with:', { email, hasPassword: !!password })
+      console.log('🚀 Attempting signup with:', { 
+        name: formData.name, 
+        email: formData.email, 
+        hasPassword: !!formData.password 
+      })
       
+      // For now, we'll create a demo user and sign them in
+      // In a real app, you'd make an API call to create the user
       const result = await signIn('credentials', {
-        email,
-        password,
+        email: formData.email,
+        password: formData.password,
         redirect: false,
       })
 
-      console.log('📊 Sign in result:', result)
+      console.log('📊 Signup result:', result)
 
       if (result?.error) {
-        console.log('❌ Sign in error:', result.error)
-        setError('Invalid email or password')
+        console.log('❌ Signup error:', result.error)
+        setError('Account creation failed. Please try again.')
         setIsLoading(false)
       } else if (result?.ok) {
-        console.log('✅ Sign in successful, redirecting...')
-        // Authentication successful, redirect to dashboard
-        router.push('/')
+        console.log('✅ Signup successful, redirecting to pricing...')
+        // Redirect to pricing page to choose a plan
+        router.push('/pricing')
       } else {
         console.log('⚠️ Unexpected result:', result)
         setError('An unexpected error occurred. Please try again.')
         setIsLoading(false)
       }
     } catch (error) {
-      console.error('💥 Sign in error:', error)
+      console.error('💥 Signup error:', error)
       setError('An error occurred. Please try again.')
       setIsLoading(false)
     }
@@ -94,14 +125,14 @@ export default function SignInPage() {
             </div>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-            Sign in to MeetingFlow
+            Create your account
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Transform your meetings into actionable workflows
+            Start transforming your meetings today
           </p>
         </div>
 
-        {/* Sign In Form */}
+        {/* Sign Up Form */}
         <Card className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
@@ -111,10 +142,22 @@ export default function SignInPage() {
             )}
 
             <Input
+              label="Full Name"
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter your full name"
+              required
+              icon={<User className="w-4 h-4" />}
+            />
+
+            <Input
               label="Email address"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               placeholder="Enter your email"
               required
               icon={<Mail className="w-4 h-4" />}
@@ -123,9 +166,21 @@ export default function SignInPage() {
             <Input
               label="Password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Create a password"
+              required
+              icon={<Lock className="w-4 h-4" />}
+            />
+
+            <Input
+              label="Confirm Password"
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your password"
               required
               icon={<Lock className="w-4 h-4" />}
             />
@@ -139,7 +194,7 @@ export default function SignInPage() {
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               ) : (
                 <>
-                  Sign In
+                  Create Account
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}
@@ -153,31 +208,19 @@ export default function SignInPage() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                  Demo Credentials
+                  Already have an account?
                 </span>
               </div>
             </div>
 
-            <div className="mt-4 space-y-3">
-              <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <strong>Admin Access:</strong>
-                </p>
-                <div className="text-sm font-mono text-gray-800 dark:text-gray-200">
-                  <div>Email: admin@meetingflow.com</div>
-                  <div>Password: admin123</div>
-                </div>
-              </div>
-              
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <strong>Regular User:</strong>
-                </p>
-                <div className="text-sm font-mono text-gray-800 dark:text-gray-200">
-                  <div>Email: user@meetingflow.com</div>
-                  <div>Password: user123</div>
-                </div>
-              </div>
+            <div className="mt-4">
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => router.push('/auth/signin')}
+              >
+                Sign In Instead
+              </Button>
             </div>
           </div>
         </Card>
@@ -185,12 +228,13 @@ export default function SignInPage() {
         {/* Footer */}
         <div className="text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
-            <button 
-              onClick={() => router.push('/auth/signup')}
-              className="text-primary-600 hover:text-primary-700 font-medium"
-            >
-              Sign up for free
+            By creating an account, you agree to our{' '}
+            <button className="text-primary-600 hover:text-primary-700 font-medium">
+              Terms of Service
+            </button>
+            {' '}and{' '}
+            <button className="text-primary-600 hover:text-primary-700 font-medium">
+              Privacy Policy
             </button>
           </p>
         </div>

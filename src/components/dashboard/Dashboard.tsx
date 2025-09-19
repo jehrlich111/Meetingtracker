@@ -11,6 +11,7 @@ import GoalCard from './GoalCard'
 import StatsCard from './StatsCard'
 import QuickTaskModal from './QuickTaskModal'
 import AssignmentModal from './AssignmentModal'
+import SubscriptionManager from '@/components/subscription/SubscriptionManager'
 import Navigation from '@/components/Navigation'
 import { Meeting, Task, Goal, DashboardStats, User } from '@/types'
 
@@ -275,6 +276,14 @@ export default function Dashboard() {
               value={`${stats.meetingEffectiveness}%`}
               icon={BarChart3}
               color="purple"
+            />
+          </div>
+
+          {/* Subscription Manager */}
+          <div className="mb-8">
+            <SubscriptionManager
+              subscriptionStatus="inactive"
+              currentPlan="Free"
             />
           </div>
 

@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Calendar, CheckSquare, Target, BarChart3, Settings, LogOut, Menu, X, Users } from 'lucide-react'
+import { Calendar, CheckSquare, Target, BarChart3, Settings, LogOut, Menu, X, Users, CreditCard } from 'lucide-react'
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
 
@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Meetings', href: '/meetings', icon: Calendar },
   { name: 'Tasks', href: '/tasks', icon: CheckSquare },
   { name: 'Goals', href: '/goals', icon: Target },
+  { name: 'Pricing', href: '/pricing', icon: CreditCard },
 ]
 
 const adminNavigation = [
